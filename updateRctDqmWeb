@@ -1,0 +1,102 @@
+#!/bin/bash
+# RCT DQM Web Gallery script
+# Author: Christos Lazaridis
+#
+# Expects two arguments: an input directory and a target directory
+
+if [ $# -ne 2 ]
+then
+  echo ${0} expects exactly two arguments: A source directory and a target directory
+  exit 10
+fi
+
+if [ ! -d ${1} ]
+then
+  echo Directory ${1} does not seem to exist!
+  exit 5
+fi
+
+if [ ! -d ${2} ]
+then
+  echo Directory ${2} does not seem to exist!
+  exit 5
+fi
+
+genRunIndex ()
+{
+  pushd ${1} > /dev/null
+
+  rm -f thumb-*
+
+  RUNNUMBER=`echo ${1} | awk 'BEGIN { FS = "/" } ; { print $NF }'`
+
+  echo Generating plots for Run \#${RUNNUMBER:3:6}
+
+  echo "<html> <head> <title>Regional Calorimeter Trigger Data Quality Monitoring Page</title></head><body> " > index.html
+  echo "<h1>RCT DQM Plots<br /> RUN #${RUNNUMBER:3:6} </h1> " >> index.html
+
+  for img in *.png ; do
+    echo Resizing and generating thumbnail for $img...
+    convert -scale 240 $img thumb-$img
+    mogrify -scale 640 $img
+    echo "<a href=\"$img\"><img src=\"thumb-$img\"></a> " >> index.html
+  done
+
+  echo "<br />Webpage generated on: " `date ` >> index.html
+
+  echo "</body></html>" >> index.html
+
+  popd > /dev/null
+}
+
+genMainIndex()
+{
+  currDir=`pwd`
+  pushd ${1} > /dev/null
+
+  echo "<html> <head> <title>Regional Calorimeter Trigger Data Quality Monitoring Page</title></head><body> " > index.html
+
+  echo "<h1>RCT DQM Plots</h1> " >> index.html
+
+  for dir in run* ; do
+    echo Adding ${dir}...
+    echo "<a href=\"$dir/index.html\">RCT Run #${dir:3:6} </a>" >> index.html
+    cat "$dir/description.txt" >> index.html
+    echo "<br />" >> index.html
+  done
+
+  echo "<br />Webpage generated on: " `date ` >> index.html
+
+  echo "</body></html>" >> index.html
+
+  popd > /dev/null
+}
+
+NEWPLOTS=false
+echo Executing...
+echo `date`
+echo Checking for new runs...
+
+for inputDir in `ls -1 ${1}`
+do
+  if [ "$(ls -A ${1}/${inputDir})" ]
+  then
+    echo Found ${1}/${inputDir}
+
+    genRunIndex ${1}/${inputDir}
+
+    echo Moving to ${2}
+    #rm -r ${2}/${inputDir}
+    mv ${1}/${inputDir} ${2}
+
+    NEWPLOTS=true
+  fi
+done
+
+if [ ${NEWPLOTS} == "true" ]
+then
+  genMainIndex ${2}
+  echo Updated main index.
+fi
+
+echo Done.
