@@ -8,34 +8,31 @@
 #                   lsfJob.csh in   test/
 
 # Script parameters
-nArguments=7
+nArguments=3
 badArgumentExit=64
 
 # Configuration parameters
 nEvents=60000
 nFiles=50
 #globalString=Run2011A
-globalString=Commissioning2014
+globalString=Commissioning2015
 #pathString=HT/RAW/v1
-pathString=MinimumBias/RAW/v3
+pathString=MinimumBias/RAW/v1
 #pathString=L1Accept/RAW/v3
 key=EEG_EHSUMS_TAU3_DECO_25_FALLGR09_FULLECAL
 # pathString=TestEnables/RAW/v1   # ONLY FOR TESTS
 
 if [ $# -lt "$nArguments" ]
 then
-  echo "Syntax: ./makeRctDqmPlots.sh <run#> <key> <month> <day> <year> <time> <dayDuration> <timeDuration>"
+  echo "Syntax: ./makeRctDqmPlots.sh <run#> <date> <time>"
   exit $badArgumentExit
 fi
 
 # Input parameters
 run=$1
-dayOfWeek=$2
-dayOfMonth=$3
-month=$4
-year=$5
-startTime=$6
-timeZone=$7
+date=$2
+startTime=$3
+timezone=GMT
 
 runStart=${run:0:3}
 runEnd=${run:3}
@@ -45,7 +42,7 @@ then
   mkdir $CMSSW_BASE/src/DQM/L1TMonitor/test/run$run
 fi
 
-echo $dayOfWeek $dayOfMonth $month $year $startTime $timeZone > $CMSSW_BASE/src/DQM/L1TMonitor/test/run$run/description.txt
+echo $date $startTime $timezone > $CMSSW_BASE/src/DQM/L1TMonitor/test/run$run/description.txt
 
 cat << EOF > "$CMSSW_BASE/src/DQM/L1TMonitor/python/L1TRCToffline_${run}_cff.py"
 import FWCore.ParameterSet.Config as cms
@@ -79,7 +76,8 @@ rctEmulDigis = cms.EDProducer("L1RCTProducer",
     queryIntervalInLS = cms.uint32(100),
     getFedsFromOmds = cms.bool(False),
     ecalDigis = cms.VInputTag(cms.InputTag("ecalDigis:EcalTriggerPrimitives")),
-    BunchCrossings = cms.vint32(0)
+    BunchCrossings = cms.vint32(0),
+    conditionsLabel = cms.string("")
 )
 
 l1tderct = cms.EDAnalyzer("L1TdeRCT",
@@ -134,9 +132,10 @@ process = cms.Process("RCTofflineTEST")
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 #process.GlobalTag.globaltag = 'GR10_P_V2::All'
 #process.GlobalTag.globaltag = 'GR10_P_V3::All'
-process.GlobalTag.globaltag = 'GR_H_V32::All'
-process.GlobalTag.connect   = 'frontier://FrontierProd/CMS_COND_31X_GLOBALTAG'
-process.GlobalTag.pfnPrefix = cms.untracked.string('frontier://FrontierProd/')
+#process.GlobalTag.connect   = 'frontier://FrontierProd/CMS_COND_31X_GLOBALTAG'
+#process.GlobalTag.pfnPrefix = cms.untracked.string('frontier://FrontierProd/')
+process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_condDBv2_cff')
+process.GlobalTag.globaltag = 'GR_H_V45'
 
 # UNCOMMENT THIS LINE TO RUN ON SETTINGS FROM THE DATABASE
 process.es_prefer_GlobalTag = cms.ESPrefer('PoolDBESSource', 'GlobalTag')
