@@ -184,4 +184,4 @@ EOF
 
 chmod +x lsfJob.csh
 
-#bsub -q 8nh < lsfJob.csh
+bsub -q 8nh < lsfJob.csh
