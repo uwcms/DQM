@@ -25,8 +25,7 @@ NPROC=$(($NPROC+1))
 #dbsql "find run, run.createdate where run.numlss > = 20 and run.createdate = 2012-05-14 and file like *Run2012B/MultiJet/RAW/v1*" >> newRuns.txt &
 #dbsql "find run, run.createdate where run.createdate = $DATE and file like *Commissioning2014/Cosmics/RAW/v3*" >> newRuns.txt &
 
-das_client.py --query="run date = ${DATE} | grep run.run_number, run.start_time,
- run.nlumis>10" >> newRuns.txt
+das_client.py --query="run date = ${DATE} | grep run.run_number, run.start_time, run.nlumis>10" >> newRuns.txt
 
 if [ "$NPROC" -ge 5 ]; then
         wait
